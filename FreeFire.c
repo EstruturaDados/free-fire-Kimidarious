@@ -1,70 +1,270 @@
+/*
+ * SISTEMA DE INVENTÁRIO - BATTLE ROYALE
+ * Desafio: Gerenciamento de itens de loot inicial
+ *
+ * Este programa simula uma mochila de inventário onde o jogador
+ * pode cadastrar, remover, listar e buscar itens coletados.
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
-// Código da Ilha – Edição Free Fire
-// Nível: Mestre
-// Este programa simula o gerenciamento avançado de uma mochila com componentes coletados durante a fuga de uma ilha.
-// Ele introduz ordenação com critérios e busca binária para otimizar a gestão dos recursos.
+// Definição de constantes
+#define MAX_ITENS 10
+#define TAM_NOME 30
+#define TAM_TIPO 20
 
-int main() {
-    // Menu principal com opções:
-    // 1. Adicionar um item
-    // 2. Remover um item
-    // 3. Listar todos os itens
-    // 4. Ordenar os itens por critério (nome, tipo, prioridade)
-    // 5. Realizar busca binária por nome
-    // 0. Sair
+/*
+ * STRUCT ITEM
+ * Representa um item no inventário do jogador
+ * - nome: identificação do item (ex: "AK-47", "Kit Médico")
+ * - tipo: categoria do item (ex: "arma", "munição", "cura")
+ * - quantidade: número de unidades do item
+ */
+typedef struct
+{
+    char nome[TAM_NOME];
+    char tipo[TAM_TIPO];
+    int quantidade;
+} Item;
 
-    // A estrutura switch trata cada opção chamando a função correspondente.
-    // A ordenação e busca binária exigem que os dados estejam bem organizados.
+// Variáveis globais
+Item inventario[MAX_ITENS]; // Vetor que armazena os itens
+int totalItens = 0;         // Contador de itens cadastrados
+
+/*
+ * FUNÇÃO: limparBuffer
+ * Limpa o buffer de entrada para evitar problemas com scanf
+ */
+void limparBuffer()
+{
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF)
+        ;
+}
+
+/*
+ * FUNÇÃO: inserirItem
+ * Cadastra um novo item no inventário
+ * Verifica se há espaço disponível antes de inserir
+ */
+void inserirItem()
+{
+    // Verifica se o inventário está cheio
+    if (totalItens >= MAX_ITENS)
+    {
+        printf("\n[!] Mochila cheia! Não é possível adicionar mais itens.\n");
+        return;
+    }
+
+    printf("\n=== CADASTRAR NOVO ITEM ===\n");
+
+    // Lê o nome do item
+    printf("Nome do item: ");
+    scanf("%s", inventario[totalItens].nome);
+    limparBuffer();
+
+    // Lê o tipo do item
+    printf("Tipo (arma/munição/cura/ferramenta): ");
+    scanf("%s", inventario[totalItens].tipo);
+    limparBuffer();
+
+    // Lê a quantidade
+    printf("Quantidade: ");
+    scanf("%d", &inventario[totalItens].quantidade);
+    limparBuffer();
+
+    totalItens++;
+    printf("\n[✓] Item '%s' adicionado com sucesso!\n", inventario[totalItens - 1].nome);
+}
+
+/*
+ * FUNÇÃO: removerItem
+ * Remove um item do inventário baseado no nome
+ * Usa busca sequencial para localizar o item
+ */
+void removerItem()
+{
+    if (totalItens == 0)
+    {
+        printf("\n[!] Inventário vazio! Não há itens para remover.\n");
+        return;
+    }
+
+    char nomeBusca[TAM_NOME];
+    printf("\n=== REMOVER ITEM ===\n");
+    printf("Digite o nome do item a remover: ");
+    scanf("%s", nomeBusca);
+    limparBuffer();
+
+    // Busca sequencial pelo item
+    int encontrado = -1;
+    for (int i = 0; i < totalItens; i++)
+    {
+        if (strcmp(inventario[i].nome, nomeBusca) == 0)
+        {
+            encontrado = i;
+            break;
+        }
+    }
+
+    // Se encontrou, remove o item
+    if (encontrado != -1)
+    {
+        // Desloca todos os itens posteriores uma posição para trás
+        for (int i = encontrado; i < totalItens - 1; i++)
+        {
+            inventario[i] = inventario[i + 1];
+        }
+        totalItens--;
+        printf("\n[✓] Item '%s' removido com sucesso!\n", nomeBusca);
+    }
+    else
+    {
+        printf("\n[!] Item '%s' não encontrado no inventário.\n", nomeBusca);
+    }
+}
+
+/*
+ * FUNÇÃO: listarItens
+ * Exibe todos os itens cadastrados no inventário
+ * Mostra nome, tipo e quantidade de cada item
+ */
+void listarItens()
+{
+    printf("\n╔═══════════════════════════════════════════════════════════╗\n");
+    printf("║              INVENTÁRIO DE LOOT - MOCHILA                 ║\n");
+    printf("╚═══════════════════════════════════════════════════════════╝\n");
+
+    if (totalItens == 0)
+    {
+        printf("\n[!] Inventário vazio! Colete itens no mapa.\n");
+        return;
+    }
+
+    printf("\nCapacidade: [%d/%d] itens\n", totalItens, MAX_ITENS);
+    printf("\n%-20s %-15s %-10s\n", "NOME", "TIPO", "QUANTIDADE");
+    printf("─────────────────────────────────────────────────────────\n");
+
+    // Percorre e exibe todos os itens
+    for (int i = 0; i < totalItens; i++)
+    {
+        printf("%-20s %-15s %-10d\n",
+               inventario[i].nome,
+               inventario[i].tipo,
+               inventario[i].quantidade);
+    }
+    printf("\n");
+}
+
+/*
+ * FUNÇÃO: buscarItem
+ * Implementa busca sequencial por nome de item
+ * Exibe os dados completos se o item for encontrado
+ */
+void buscarItem()
+{
+    if (totalItens == 0)
+    {
+        printf("\n[!] Inventário vazio! Não há itens para buscar.\n");
+        return;
+    }
+
+    char nomeBusca[TAM_NOME];
+    printf("\n=== BUSCAR ITEM ===\n");
+    printf("Digite o nome do item: ");
+    scanf("%s", nomeBusca);
+    limparBuffer();
+
+    // Busca sequencial
+    int encontrado = -1;
+    for (int i = 0; i < totalItens; i++)
+    {
+        if (strcmp(inventario[i].nome, nomeBusca) == 0)
+        {
+            encontrado = i;
+            break;
+        }
+    }
+
+    // Exibe resultado da busca
+    if (encontrado != -1)
+    {
+        printf("\n[✓] Item encontrado!\n");
+        printf("─────────────────────────────────\n");
+        printf("Nome:       %s\n", inventario[encontrado].nome);
+        printf("Tipo:       %s\n", inventario[encontrado].tipo);
+        printf("Quantidade: %d\n", inventario[encontrado].quantidade);
+        printf("Posição:    [%d]\n", encontrado + 1);
+    }
+    else
+    {
+        printf("\n[!] Item '%s' não encontrado no inventário.\n", nomeBusca);
+    }
+}
+
+/*
+ * FUNÇÃO: exibirMenu
+ * Mostra as opções disponíveis para o jogador
+ */
+void exibirMenu()
+{
+    printf("\n╔═══════════════════════════════════════════════════════════╗\n");
+    printf("║          SISTEMA DE INVENTÁRIO - BATTLE ROYALE            ║\n");
+    printf("╠═══════════════════════════════════════════════════════════╣\n");
+    printf("║  [1] Cadastrar item (coletar loot)                        ║\n");
+    printf("║  [2] Remover item (descartar)                             ║\n");
+    printf("║  [3] Listar todos os itens                                ║\n");
+    printf("║  [4] Buscar item específico                               ║\n");
+    printf("║  [0] Sair do jogo                                         ║\n");
+    printf("╚═══════════════════════════════════════════════════════════╝\n");
+    printf("\nEscolha uma opção: ");
+}
+
+/*
+ * FUNÇÃO PRINCIPAL
+ * Controla o fluxo do programa com menu interativo
+ */
+int main()
+{
+    int opcao;
+
+    printf("\n Bem-vindo ao Sistema de Inventário Battle Royale!\n");
+    printf("Gerencie seu loot e sobreviva!\n");
+
+    // Loop principal do programa
+    do
+    {
+        exibirMenu();
+        scanf("%d", &opcao);
+        limparBuffer();
+
+        // Executa a ação escolhida pelo jogador
+        switch (opcao)
+        {
+        case 1:
+            inserirItem();
+            listarItens(); // Mostra inventário atualizado
+            break;
+        case 2:
+            removerItem();
+            listarItens(); // Mostra inventário atualizado
+            break;
+        case 3:
+            listarItens();
+            break;
+        case 4:
+            buscarItem();
+            break;
+        case 0:
+            printf("\n Encerrando o jogo... Boa sorte na battle royale!\n");
+            break;
+        default:
+            printf("\n[!] Opção inválida! Tente novamente.\n");
+        }
+
+    } while (opcao != 0);
 
     return 0;
 }
-
-// Struct Item:
-// Representa um componente com nome, tipo, quantidade e prioridade (1 a 5).
-// A prioridade indica a importância do item na montagem do plano de fuga.
-
-// Enum CriterioOrdenacao:
-// Define os critérios possíveis para a ordenação dos itens (nome, tipo ou prioridade).
-
-// Vetor mochila:
-// Armazena até 10 itens coletados.
-// Variáveis de controle: numItens (quantidade atual), comparacoes (análise de desempenho), ordenadaPorNome (para controle da busca binária).
-
-// limparTela():
-// Simula a limpeza da tela imprimindo várias linhas em branco.
-
-// exibirMenu():
-// Apresenta o menu principal ao jogador, com destaque para status da ordenação.
-
-// inserirItem():
-// Adiciona um novo componente à mochila se houver espaço.
-// Solicita nome, tipo, quantidade e prioridade.
-// Após inserir, marca a mochila como "não ordenada por nome".
-
-// removerItem():
-// Permite remover um componente da mochila pelo nome.
-// Se encontrado, reorganiza o vetor para preencher a lacuna.
-
-// listarItens():
-// Exibe uma tabela formatada com todos os componentes presentes na mochila.
-
-// menuDeOrdenacao():
-// Permite ao jogador escolher como deseja ordenar os itens.
-// Utiliza a função insertionSort() com o critério selecionado.
-// Exibe a quantidade de comparações feitas (análise de desempenho).
-
-// insertionSort():
-// Implementação do algoritmo de ordenação por inserção.
-// Funciona com diferentes critérios de ordenação:
-// - Por nome (ordem alfabética)
-// - Por tipo (ordem alfabética)
-// - Por prioridade (da mais alta para a mais baixa)
-
-// buscaBinariaPorNome():
-// Realiza busca binária por nome, desde que a mochila esteja ordenada por nome.
-// Se encontrar, exibe os dados do item buscado.
-// Caso contrário, informa que não encontrou o item.
